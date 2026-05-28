@@ -1,0 +1,16 @@
+{
+  "name": "travel-claude-notion-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Claude API travel itinerary JSON generator with Notion database export.",
+  "workspaces": ["server", "client"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace client\"",
+    "test": "npm test --workspace server && npm test --workspace client",
+    "build": "npm run build --workspace client",
+    "start": "npm start --workspace server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
