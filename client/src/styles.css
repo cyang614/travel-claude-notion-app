@@ -62,3 +62,26 @@ pre { overflow: auto; white-space: pre-wrap; word-break: break-word; border-radi
 .notion-links a { color: #225dbe; font-weight: 800; }
 @media (max-width: 1100px) { .workspace { grid-template-columns: 1fr; } .form-panel { position: static; } .cards { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .app-shell { padding: 20px 14px; } .hero { padding: 28px; border-radius: 24px; } .form-grid { grid-template-columns: 1fr; } .panel { padding: 18px; } }
+
+/* Day itinerary */
+.day-details summary { color: #334aa0; font-weight: 800; cursor: pointer; margin-top: 14px; }
+.day-block { border-left: 3px solid #5d7df0; margin: 14px 0; padding-left: 14px; }
+.day-title { margin: 0 0 10px; font-size: 15px; color: #17223b; font-weight: 800; }
+.time-slots { display: grid; gap: 8px; margin-bottom: 10px; }
+.time-slot { display: grid; grid-template-columns: 60px 1fr; gap: 4px 10px; font-size: 13px; }
+.slot-label { font-weight: 700; color: #5c6881; }
+.slot-activity { font-weight: 700; color: #162033; }
+.slot-location { color: #395bd7; font-size: 12px; }
+.slot-tip { color: #7a8099; font-size: 12px; font-style: italic; }
+.day-meals { font-size: 13px; color: #4a5568; margin-bottom: 4px; }
+.day-cost { font-size: 13px; font-weight: 800; color: #395bd7; }
+
+/* Refine */
+.refine-section { margin-top: 16px; display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid #e4eafa; }
+.refine-input { min-height: 72px; font-size: 13px; resize: vertical; }
+.refine-btn { font-size: 13px; padding: 10px 14px; }
+
+/* Notion links */
+.notion-links a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.notion-links a:hover { text-decoration: underline; }
+

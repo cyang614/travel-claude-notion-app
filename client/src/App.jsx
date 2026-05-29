@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { generateAndSave, generatePlans, savePlans } from './api.js';
+import { generateAndSave, generatePlansStream, refinePlan, savePlans } from './api.js';
 
 const styleOptions = ['美食探索', '文化歷史', '自然景觀', '親子友善', '購物休閒', '冒險探索', '奢華度假', '背包省錢'];
 
@@ -23,7 +23,7 @@ function Checkbox({ label, checked, onChange }) {
   );
 }
 
-function PlanCard({ plan }) {
+function PlanCard({ plan, refineText, setRefineText, isRefining, onRefine }) {
   return (
     <article className="plan-card">
       <div className="plan-card__header">
@@ -37,10 +37,46 @@ function PlanCard({ plan }) {
       <ul className="highlights">
         {plan.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
       </ul>
-      <details>
-        <summary>查看每日行程 JSON 摘要</summary>
-        <pre>{JSON.stringify(plan.days, null, 2)}</pre>
+      <details className="day-details">
+        <summary>查看每日行程</summary>
+        {plan.days.map((day) => (
+          <div key={day.day} className="day-block">
+            <h4 className="day-title">Day {day.day}｜{day.title}</h4>
+            <div className="time-slots">
+              {[
+                { emoji: '🌅', label: '上午', slot: day.morning },
+                { emoji: '☀️', label: '下午', slot: day.afternoon },
+                { emoji: '🌙', label: '晚上', slot: day.evening }
+              ].map(({ emoji, label, slot }) => (
+                <div key={label} className="time-slot">
+                  <span className="slot-label">{emoji} {label}</span>
+                  <span className="slot-activity">{slot.activity}</span>
+                  <span className="slot-location">📍 {slot.location}</span>
+                  <span className="slot-tip">💡 {slot.tip}</span>
+                </div>
+              ))}
+            </div>
+            <div className="day-meals">🍜 {day.meal_recommendations.join('、')}</div>
+            <div className="day-cost">💰 {day.estimated_daily_cost}</div>
+          </div>
+        ))}
       </details>
+      <div className="refine-section">
+        <textarea
+          className="refine-input"
+          placeholder="輸入修改意見，例如：第二天改輕鬆一點、加入溫泉體驗…"
+          value={refineText}
+          onChange={(e) => setRefineText(e.target.value)}
+        />
+        <button
+          type="button"
+          className="secondary refine-btn"
+          disabled={!refineText.trim() || isRefining}
+          onClick={onRefine}
+        >
+          {isRefining ? '修改中…' : '✏️ 調整這個方案'}
+        </button>
+      </div>
     </article>
   );
 }
@@ -50,6 +86,13 @@ export default function App() {
   const [plans, setPlans] = useState([]);
   const [notionPages, setNotionPages] = useState([]);
   const [status, setStatus] = useState({ type: 'idle', message: '' });
+  const [refineState, setRefineState] = useState({});
+
+  const getRefine = (id) => refineState[id] || { text: '', isRefining: false };
+  const setRefineText = (id, text) =>
+    setRefineState((prev) => ({ ...prev, [id]: { ...(prev[id] || { text: '', isRefining: false }), text } }));
+  const setIsRefining = (id, val) =>
+    setRefineState((prev) => ({ ...prev, [id]: { ...(prev[id] || { text: '', isRefining: false }), isRefining: val } }));
 
   const input = useMemo(() => ({
     destination: form.destination,
@@ -78,13 +121,24 @@ export default function App() {
     event.preventDefault();
     setStatus({ type: 'loading', message: form.writeToNotion ? '正在請 Claude 規劃並寫入 Notion…' : '正在請 Claude 產生行程 JSON…' });
     setNotionPages([]);
+
+    if (!form.writeToNotion) {
+      generatePlansStream(input, {
+        onProgress: (msg) => setStatus({ type: 'loading', message: msg }),
+        onDone: (plans) => {
+          setPlans(plans);
+          setStatus({ type: 'success', message: '已產生 3 個行程方案。' });
+        },
+        onError: (err) => setStatus({ type: 'error', message: err.message })
+      });
+      return;
+    }
+
     try {
-      const result = form.writeToNotion
-        ? await generateAndSave({ notionDatabaseId: form.notionDatabaseId, input })
-        : await generatePlans(input);
+      const result = await generateAndSave({ notionDatabaseId: form.notionDatabaseId, input });
       setPlans(result.plans);
       setNotionPages(result.notion_pages || []);
-      setStatus({ type: 'success', message: form.writeToNotion ? '已完成行程產生並寫入 Notion。' : '已產生 3 個行程方案。' });
+      setStatus({ type: 'success', message: '已完成行程產生並寫入 Notion。' });
     } catch (error) {
       setStatus({ type: 'error', message: error.message });
     }
@@ -98,6 +152,25 @@ export default function App() {
       setStatus({ type: 'success', message: '已將目前 3 個方案寫入 Notion。' });
     } catch (error) {
       setStatus({ type: 'error', message: error.message });
+    }
+  }
+
+  async function handleRefine(plan) {
+    const current = getRefine(plan.plan_id);
+    const feedback = current.text.trim();
+    if (!feedback) return;
+
+    setIsRefining(plan.plan_id, true);
+    setStatus({ type: 'loading', message: `正在調整方案 ${plan.plan_id}…` });
+    try {
+      const result = await refinePlan({ plan, feedback, input });
+      setPlans((prev) => prev.map((item) => (item.plan_id === plan.plan_id ? result.plan : item)));
+      setRefineText(plan.plan_id, '');
+      setStatus({ type: 'success', message: `方案 ${plan.plan_id} 已更新。` });
+    } catch (error) {
+      setStatus({ type: 'error', message: error.message });
+    } finally {
+      setIsRefining(plan.plan_id, false);
     }
   }
 
@@ -171,13 +244,24 @@ export default function App() {
             <div className="notion-links">
               <h3>Notion Pages</h3>
               {notionPages.map((page) => (
-                <a key={page.notion_page_id} href={page.notion_page_url} target="_blank" rel="noreferrer">方案 {page.plan_id}：{page.notion_page_id}</a>
+                <a key={page.notion_page_id} href={page.notion_page_url} target="_blank" rel="noreferrer">
+                  📄 方案 {page.plan_id} — 在 Notion 開啟 ↗
+                </a>
               ))}
             </div>
           )}
 
           <div className="cards">
-            {plans.map((plan) => <PlanCard key={plan.plan_id} plan={plan} />)}
+            {plans.map((plan) => (
+              <PlanCard
+                key={plan.plan_id}
+                plan={plan}
+                refineText={getRefine(plan.plan_id).text}
+                setRefineText={(t) => setRefineText(plan.plan_id, t)}
+                isRefining={getRefine(plan.plan_id).isRefining}
+                onRefine={() => handleRefine(plan)}
+              />
+            ))}
           </div>
 
           {plans.length > 0 && (

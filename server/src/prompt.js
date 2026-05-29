@@ -32,31 +32,37 @@ export const travelPlanTool = {
                   morning: {
                     type: 'object',
                     additionalProperties: false,
-                    required: ['activity', 'location', 'tip'],
+                    required: ['activity', 'location', 'tip', 'lat', 'lng'],
                     properties: {
                       activity: { type: 'string' },
                       location: { type: 'string' },
-                      tip: { type: 'string' }
+                      tip: { type: 'string' },
+                      lat: { type: 'number' },
+                      lng: { type: 'number' }
                     }
                   },
                   afternoon: {
                     type: 'object',
                     additionalProperties: false,
-                    required: ['activity', 'location', 'tip'],
+                    required: ['activity', 'location', 'tip', 'lat', 'lng'],
                     properties: {
                       activity: { type: 'string' },
                       location: { type: 'string' },
-                      tip: { type: 'string' }
+                      tip: { type: 'string' },
+                      lat: { type: 'number' },
+                      lng: { type: 'number' }
                     }
                   },
                   evening: {
                     type: 'object',
                     additionalProperties: false,
-                    required: ['activity', 'location', 'tip'],
+                    required: ['activity', 'location', 'tip', 'lat', 'lng'],
                     properties: {
                       activity: { type: 'string' },
                       location: { type: 'string' },
-                      tip: { type: 'string' }
+                      tip: { type: 'string' },
+                      lat: { type: 'number' },
+                      lng: { type: 'number' }
                     }
                   },
                   meal_recommendations: { type: 'array', items: { type: 'string' } },
@@ -90,5 +96,6 @@ export function buildTravelPrompt(input) {
 3. 每個方案的 days 陣列必須剛好有 ${input.days} 天，day 從 1 到 ${input.days}。
 4. 預算為台幣且含機票，請讓 estimated_cost 與 estimated_daily_cost 合理可執行。
 5. plan_name 需 4-8 字、有特色。
-6. 不要加入 schema 以外欄位。`;
+6. 不要加入 schema 以外欄位。
+7. morning/afternoon/evening 的 lat/lng 必須是真實存在的景點座標，精確到小數點後 4 位。`;
 }

@@ -21,9 +21,9 @@ const samplePlans = [
     days: [1, 2].map((day) => ({
       day,
       title: `文化第${day}天`,
-      morning: { activity: '參拜古寺', location: '清水寺', tip: '早點到' },
-      afternoon: { activity: '散步老街', location: '二年坂', tip: '穿好走鞋' },
-      evening: { activity: '祇園夜景', location: '祇園', tip: '保持安靜' },
+      morning: { activity: '參拜古寺', location: '清水寺', tip: '早點到', lat: 34.9949, lng: 135.7850 },
+      afternoon: { activity: '散步老街', location: '二年坂', tip: '穿好走鞋', lat: 34.9970, lng: 135.7808 },
+      evening: { activity: '祇園夜景', location: '祇園', tip: '保持安靜', lat: 35.0037, lng: 135.7750 },
       meal_recommendations: ['湯豆腐', '抹茶甜點'],
       estimated_daily_cost: '每人 NT$4,000-6,000'
     })),
@@ -39,9 +39,9 @@ const samplePlans = [
     days: [1, 2].map((day) => ({
       day,
       title: `職人第${day}天`,
-      morning: { activity: '市場採買', location: '錦市場', tip: '準備現金' },
-      afternoon: { activity: '手作體驗', location: '河原町', tip: '先預約' },
-      evening: { activity: '鴨川散步', location: '鴨川', tip: '帶薄外套' },
+      morning: { activity: '市場採買', location: '錦市場', tip: '準備現金', lat: 35.0050, lng: 135.7647 },
+      afternoon: { activity: '手作體驗', location: '河原町', tip: '先預約', lat: 35.0046, lng: 135.7692 },
+      evening: { activity: '鴨川散步', location: '鴨川', tip: '帶薄外套', lat: 35.0116, lng: 135.7717 },
       meal_recommendations: ['京料理', '咖啡甜點'],
       estimated_daily_cost: '每人 NT$4,500-6,500'
     })),
@@ -57,9 +57,9 @@ const samplePlans = [
     days: [1, 2].map((day) => ({
       day,
       title: `自然第${day}天`,
-      morning: { activity: '神社健行', location: '伏見稻荷', tip: '補充水分' },
-      afternoon: { activity: '嵐山散策', location: '嵐山', tip: '避開午後人潮' },
-      evening: { activity: '溫泉放鬆', location: '京都市區', tip: '確認刺青規定' },
+      morning: { activity: '神社健行', location: '伏見稻荷', tip: '補充水分', lat: 34.9671, lng: 135.7727 },
+      afternoon: { activity: '嵐山散策', location: '嵐山', tip: '避開午後人潮', lat: 35.0094, lng: 135.6668 },
+      evening: { activity: '溫泉放鬆', location: '京都市區', tip: '確認刺青規定', lat: 35.0116, lng: 135.7681 },
       meal_recommendations: ['蕎麥麵', '串燒'],
       estimated_daily_cost: '每人 NT$3,500-5,500'
     })),
@@ -98,6 +98,31 @@ describe('travel app API', () => {
   it('validates required fields', async () => {
     const app = createApp();
     const res = await request(app).post('/api/trips/generate').send({ destination: '' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('validation_error');
+  });
+
+  it('refines a single plan', async () => {
+    const refineTravelPlan = vi.fn().mockResolvedValue(samplePlans[0]);
+    const app = createApp({ refineTravelPlan });
+    const res = await request(app).post('/api/trips/refine').send({
+      plan: samplePlans[0],
+      feedback: '第二天改輕鬆一點',
+      input
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.plan.plan_id).toBe('A');
+    expect(refineTravelPlan).toHaveBeenCalled();
+  });
+
+  it('returns 400 for refine with missing feedback', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/trips/refine').send({
+      plan: samplePlans[0],
+      feedback: '',
+      input
+    });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('validation_error');
   });

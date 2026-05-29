@@ -9,12 +9,20 @@ export const travelInputSchema = z.object({
   notes: z.string().trim().optional().default('')
 });
 
+const timeSlotSchema = z.object({
+  activity: z.string(),
+  location: z.string(),
+  tip: z.string(),
+  lat: z.number(),
+  lng: z.number()
+});
+
 const daySchema = z.object({
   day: z.number().int().min(1),
   title: z.string().min(1),
-  morning: z.object({ activity: z.string(), location: z.string(), tip: z.string() }),
-  afternoon: z.object({ activity: z.string(), location: z.string(), tip: z.string() }),
-  evening: z.object({ activity: z.string(), location: z.string(), tip: z.string() }),
+  morning: timeSlotSchema,
+  afternoon: timeSlotSchema,
+  evening: timeSlotSchema,
   meal_recommendations: z.array(z.string()).min(1),
   estimated_daily_cost: z.string().min(1)
 });
@@ -44,5 +52,11 @@ export const saveRequestSchema = z.object({
 
 export const generateAndSaveRequestSchema = z.object({
   notionDatabaseId: z.string().trim().min(1, '請輸入 Notion Database ID'),
+  input: travelInputSchema
+});
+
+export const refineRequestSchema = z.object({
+  plan: planSchema,
+  feedback: z.string().trim().min(1, '請輸入修改意見'),
   input: travelInputSchema
 });

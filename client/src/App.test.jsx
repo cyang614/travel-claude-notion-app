@@ -4,6 +4,8 @@ import App from './App.jsx';
 
 vi.mock('./api.js', () => ({
   generatePlans: vi.fn(),
+  generatePlansStream: vi.fn(),
+  refinePlan: vi.fn(),
   savePlans: vi.fn(),
   generateAndSave: vi.fn()
 }));
