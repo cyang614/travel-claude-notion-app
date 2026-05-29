@@ -1,3 +1,4 @@
+import './env.js';
 import { Client } from '@notionhq/client';
 
 const notionVersion = '2022-06-28';

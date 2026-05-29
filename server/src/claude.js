@@ -1,3 +1,4 @@
+import './env.js';
 import Anthropic from '@anthropic-ai/sdk';
 import { plansSchema } from './schemas.js';
 import { buildTravelPrompt, travelPlanTool } from './prompt.js';
